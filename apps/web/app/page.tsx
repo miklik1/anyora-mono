@@ -1,6 +1,11 @@
 import Image, { type ImageProps } from "next/image";
 import { Button } from "@repo/ui/button";
+import { PrismaClient } from '@repo/db';
+import { UserSchema, UserType } from "@repo/validations/user";
 import styles from "./page.module.css";
+
+
+const client = new PrismaClient();
 
 type Props = Omit<ImageProps, "src"> & {
   srcLight: string;
@@ -18,7 +23,26 @@ const ThemeImage = (props: Props) => {
   );
 };
 
-export default function Home() {
+// Type guard to filter out null values
+function isValidUser(user: UserType | null): user is UserType {
+  return user !== null;
+}
+
+export default async function Home() {
+  const rawUsers = await client.user.findMany();
+
+  // Validate and filter users
+  const users = rawUsers
+    .map((user) => {
+      try {
+        return UserSchema.parse(user);
+      } catch (error) {
+        console.error("Validation error for user:", error);
+        return null;
+      }
+    })
+    .filter(isValidUser); // Use the type guard to filter non-null users
+
   return (
     <div className={styles.page}>
       <main className={styles.main}>
@@ -37,6 +61,29 @@ export default function Home() {
           </li>
           <li>Save and see your changes instantly.</li>
         </ol>
+
+        {/* Iterate over users */}
+        <div className={styles.userList}>
+          <h2>Users</h2>
+          <ul>
+            {users.map((user) => (
+              <li key={user.id}>
+                <p>
+                  <strong>Name:</strong> {user.name || "N/A"}
+                </p>
+                <p>
+                  <strong>Email:</strong> {user.email || "N/A"}
+                </p>
+                <p>
+                  <strong>Email Verified:</strong>{" "}
+                  {user.emailVerified
+                    ? new Date(user.emailVerified).toLocaleString()
+                    : "Not Verified"}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
 
         <div className={styles.ctas}>
           <a
