@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CreateUserSchema } from "@repo/validations/createUser";
+import { SignupSchema } from "@repo/validations/user";
 
 export default function CreateUserForm() {
   const [name, setName] = useState("");
@@ -12,7 +12,7 @@ export default function CreateUserForm() {
     e.preventDefault();
 
     // Validate user input using CreateUserSchema
-    const validationResult = CreateUserSchema.safeParse({ name, email });
+    const validationResult = SignupSchema.safeParse({ name, email });
     if (!validationResult.success) {
       const errors = validationResult.error.errors.map(
         (err) => `${err.path.join(".")}: ${err.message}`

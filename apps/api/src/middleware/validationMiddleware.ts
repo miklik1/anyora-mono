@@ -1,25 +1,20 @@
 import { Request, Response, NextFunction } from "express";
-import { z, ZodError } from "zod";
+import { ZodSchema, ZodError } from "zod";
 
-export const validate = (schema: z.ZodSchema) => {
+export function validate(schema: ZodSchema<any>) {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
       schema.parse(req.body);
-      next(); // Proceed to the next middleware/route handler
+      next();
     } catch (error) {
       if (error instanceof ZodError) {
-        // Send validation errors as response
         res.status(400).json({
-          error: "Validation error",
-          details: error.errors.map((err) => ({
-            path: err.path,
-            message: err.message,
-          })),
+          error: "Validation failed",
+          details: error.errors.map((err) => err.message),
         });
       } else {
-        // Pass any unexpected errors to Express error handler
-        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
       }
     }
   };
-};
+}

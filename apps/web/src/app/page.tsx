@@ -1,39 +1,10 @@
 import Image from "next/image";
-import { UserSchema, UserType } from "@repo/validations/user";
-import CreateUserForm from "./components/CreateUserForm";
-import { z } from "zod";
-
-// Server-side fetching
-const fetchUsers = async (): Promise<UserType[]> => {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users`, {
-    cache: "no-store",
-  });
-  const data = await res.json();
-
-  // Optionally validate the response
-  const validationResult = z.array(UserSchema).safeParse(data);
-  if (!validationResult.success) {
-    throw new Error("Invalid user data");
-  }
-
-  return validationResult.data;
-};
 
 export default async function Home() {
-  const users = await fetchUsers();
 
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <h1>Users</h1>
-        <ul>
-          {users.map((user) => (
-            <li key={user.id}>
-              {user.name} - {user.email}
-            </li>
-          ))}
-        </ul>
-        <CreateUserForm />
         <Image
           className="dark:invert"
           src="/next.svg"

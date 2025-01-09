@@ -4,7 +4,6 @@
   "type": "module",
   "private": true,
   "exports": {
-    "./createUser": "./src/custom/createUser.ts",
     "./user": "./src/models/user.ts"
   },
   "scripts": {

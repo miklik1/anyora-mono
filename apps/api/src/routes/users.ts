@@ -1,33 +1,55 @@
 import { Router } from "express";
+import bcrypt from "bcryptjs";
 import { prisma } from "@repo/db";
-import { UserSchema } from "@repo/validations/user";
+import { SignupSchema } from "@repo/validations/user";
 import { validate } from "../middleware/validationMiddleware.js";
-import { CreateUserSchema } from "@repo/validations/createUser";
+import { authenticate } from "../middleware/authenticate.js";
 
 const router = Router();
 
 // GET: List users
-router.get("/", async (req, res) => {
+router.get("/", authenticate, async (req, res) => {
   try {
-    const users = await prisma.user.findMany();
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+      },
+    });
 
     res.json(users);
   } catch (error) {
+    console.error("Error fetching users:", error);
     res.status(500).json({ error: "Failed to fetch users" });
   }
 });
 
 // POST: Create user
-router.post("/", validate(CreateUserSchema), async (req, res) => {
+router.post("/", validate(SignupSchema), async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, password } = req.body;
+
+    // Hash the password before saving it
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await prisma.user.create({
-      data: { name, email },
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+      },
     });
 
-    res.status(201).json(newUser);
+    res.status(201).json({
+      id: newUser.id,
+      name: newUser.name,
+      email: newUser.email,
+      createdAt: newUser.createdAt,
+    });
   } catch (error) {
+    console.error("Error creating user:", error);
     res.status(500).json({ error: "Failed to create user" });
   }
 });
